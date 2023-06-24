@@ -8,8 +8,6 @@ df = pd.read_excel(excel_file, sheet_name=sheet_name)
 for col in df:
     df[col]=df[col].astype(str).apply(lambda x: x.replace('x',df[col].name))
 
-# print(df)
-
 # Define an empty dictionary to store the data
 data_dict = {}
 
@@ -33,7 +31,6 @@ employee_list = []
 # Create a list of dictionaries with each dictionary containing the employee and their roles
 for key, internal_dict in extracted_dicts:
     value_list = [(k, v) for k, v in internal_dict.items()] # Turn dictionary into a list of tuples
-    # print(f"Key: {key}")
     cleaned_value_list = list(filter(lambda x: x[1] != 'nan', value_list)) # Clean the list of any tuples that have 'nan'
     dissolved_value_list = [item for t in cleaned_value_list for item in t] # Dissolve the tuples into a list
     
@@ -50,15 +47,53 @@ for key, internal_dict in extracted_dicts:
 advanced_user_list = []
 core_user_list = []
 self_service_list = []
+advanced_user_constant_list = []
+core_user_constant_list = []
+self_service_constant_list = []
+
+sheet_name = "Role Mapping"
+df2 = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+data_dict_roles = {}
+
+# Iterate over the rows in the sheet that contains the role mapping
+for index, row in df2.iterrows():
+    # Create a dictionary entry for each row
+    key = row[df2.columns[0]]
+    row_dict = {}
+    for column in df2.columns[1:]:
+        value = row[column]
+       
+    # Add the row dictionary to the data dictionary
+   
+    data_dict_roles[key] = value
+
+
+for key, employee_value in data_dict_roles.items(): # Create three lists of roles that will be used to determine which employees are in which role
+    if employee_value == 'Advanced':
+        advanced_user_constant_list.append(key)
+    elif employee_value == 'Core Use':
+        core_user_constant_list.append(key)
+    else:
+        self_service_constant_list.append(key)
 
 for dic in employee_list: # Iterates through the master list of dictionaries and sees if someone has a specific role, then adds them to one of the three above lists
     for key, employee_value in dic.items():
-        if 'Z_FLP_USER' in employee_value:
+        if any(x in advanced_user_constant_list for x in employee_value) == True:
             advanced_user_list.append(key)
+        elif any(x in core_user_constant_list for x in employee_value) == True:
+            core_user_list.append(key)
+        else:
+            self_service_list.append(key)
 
-print(employee_list)
-print(advanced_user_list)
 
+# print(employee_list)
+# print(advanced_user_list)
+# print(core_user_list)
+# print(self_service_list)
+
+total_FUE = (len(advanced_user_list) * 1) + (len(core_user_list) * 0.2) + (len(self_service_constant_list) * 0.0333)
+print("The total FUE used by the organization is: " + str(total_FUE))
 
 
 
