@@ -86,14 +86,9 @@ for dic in employee_list: # Iterates through the master list of dictionaries and
         else:
             self_service_list.append(key)
 
-
-# print(employee_list)
-# print(advanced_user_list)
-# print(core_user_list)
-# print(self_service_list)
-
-total_FUE = (len(advanced_user_list) * 1) + (len(core_user_list) * 0.2) + (len(self_service_constant_list) * 0.0333)
+total_FUE = (len(advanced_user_list) * 1) + (len(core_user_list) * 0.2) + (len(self_service_constant_list) * 0.0333) # Calculate Total FUE based on doc rules
 print("The total FUE used by the organization is: " + str(total_FUE))
+
 
 
 
