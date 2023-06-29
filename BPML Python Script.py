@@ -1,8 +1,14 @@
-import pandas as pd
 import math
+import os
+import sys
+root_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = root_dir.replace("\\", "/")
+libraries_dir = root_dir + "/libs"
+sys.path.append(libraries_dir)
+import pandas as pd
 import openpyxl
 import xlsxwriter
-import os
+
 
 def find_common_element(list1, list2):  # Function that checks if an employee has only 1 role in a certain category
     common_elements = set(list1) & set(list2)  # Find common elements using set intersection
