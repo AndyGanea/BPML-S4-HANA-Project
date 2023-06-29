@@ -1,10 +1,12 @@
 import math
 import os
 import sys
+import glob
+
 root_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = root_dir.replace("\\", "/")
 libraries_dir = root_dir + "/libs"
-sys.path.append(libraries_dir)
+sys.path.append(libraries_dir) # Used to import local pip libraries
 import pandas as pd
 import openpyxl
 import xlsxwriter
@@ -18,15 +20,48 @@ def count_common_elements(list1, list2): # Function that checks how many roles a
     common_elements = set(list1) & set(list2)  # Find common elements using set intersection
     return len(common_elements)
 
+def get_library_name(): # Used to easily obtain the path of the libraries
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = root_dir.replace("\\", "/")
+    libraries_directory = root_dir + "/libs"
+    return libraries_directory
+
+def get_spreadsheets_name(): # Used to easily obtain the path of the spreadsheets
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = root_dir.replace("\\", "/")
+    spreadsheet_directory = root_dir + "/spreadsheets"
+    return spreadsheet_directory
 
 # Contains the logic to pick an Excel file and a valid sheet.
 
-excel_file = input("Please enter the path of the Excel File containing the BPML without quotations: ")
+input_spreadsheet_directory = get_spreadsheets_name()
 
-while os.path.exists(excel_file) != True or excel_file.endswith((".xls", ".xlsx", ".xlsm", ".xslb")) != True:
-    print("\nThe path to that Excel file is incorrect, or that Excel file does not exist. Please try again.")
-    excel_file = input("Please enter the path of the Excel File containing the BPML without quotations: ")
+excel_files = glob.glob(os.path.join(input_spreadsheet_directory, '*.xlsx')) # Looks at all the .xlsx files in the directory
 
+if len(excel_files) == 0:
+    print("No Excel files found, please re-run program with your input Excel file in the correct folder.")
+    exit()
+
+print("Found Excel file(s):")
+for i, file in enumerate(excel_files):
+    print(f"{i+1}. {file}") # Prints out all found files.
+
+while True:
+    choice = input("Enter the number of the Excel file you want to choose (or 'q' to quit): ")
+    if choice.lower() == 'q': # Allows the user to quit program
+        break
+    try:
+        choice = int(choice)
+        if 1 <= choice <= len(excel_files):
+            excel_file = excel_files[choice - 1]
+            print(f"You selected: {excel_file}")
+            break
+        else:
+            print("Invalid choice. Please enter a valid number.")
+    except ValueError:
+        print("Invalid choice. Please enter a valid number.")
+
+#### Code that allows a user to select a specific sheet where the BPML sheet is stored.
 excel_file_name = pd.ExcelFile(excel_file)
 sheet_names = excel_file_name.sheet_names
 
@@ -43,6 +78,9 @@ while True:
         break
     except ValueError:
         print("Invalid input. Please enter a valid integer.")
+
+########
+
 
 selected_sheet = sheet_names[sheet_index]
 df = pd.read_excel(excel_file, sheet_name=selected_sheet)
@@ -86,6 +124,7 @@ for key, internal_dict in extracted_dicts:
     employee_dict = {key: list_before_dictionary_entry} # Create a separate dictionary for each employee and their roles
     employee_list.append(employee_dict) # Add each employee to a master list of dicionaries
 
+# Initializing all lists used to store data
 advanced_user_list = []
 core_user_list = []
 self_service_list = []
@@ -156,6 +195,8 @@ for dic in employee_list: # Iterates through the master list of dictionaries and
 
         employee_count_dict = {}
 
+        # Create a dictionary with an employee and how many roles they have of each type
+        
         employee_count_dict["Name"] = key
         employee_count_dict["Advanced User Roles"] = advanced_user_count
         employee_count_dict["Core User Roles"] = core_user_count
