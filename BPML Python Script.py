@@ -2,19 +2,44 @@ import pandas as pd
 import math
 import openpyxl
 import xlsxwriter
+import os
 
 def find_common_element(list1, list2):  # Function that checks if an employee has only 1 role in a certain category
     common_elements = set(list1) & set(list2)  # Find common elements using set intersection
     return len(common_elements) == 1 # Returns TRUE if and only if the lists have one element in common
 
-def count_common_elements(list1, list2):
+def count_common_elements(list1, list2): # Function that checks how many roles a certain user has of a category
     common_elements = set(list1) & set(list2)  # Find common elements using set intersection
     return len(common_elements)
 
 
-excel_file = r"C:\Users\aganea\Documents\Project_Elevate_BPML (3).xlsx"
-sheet_name = "SteriMax User Mapping"
-df = pd.read_excel(excel_file, sheet_name=sheet_name)
+# Contains the logic to pick an Excel file and a valid sheet.
+
+excel_file = input("Please enter the path of the Excel File containing the BPML without quotations: ")
+
+while os.path.exists(excel_file) != True or excel_file.endswith((".xls", ".xlsx", ".xlsm", ".xslb")) != True:
+    print("\nThe path to that Excel file is incorrect, or that Excel file does not exist. Please try again.")
+    excel_file = input("Please enter the path of the Excel File containing the BPML without quotations: ")
+
+excel_file_name = pd.ExcelFile(excel_file)
+sheet_names = excel_file_name.sheet_names
+
+print("Available sheet(s):")
+for index, name in enumerate(sheet_names):
+    print(f"{index + 1}. {name}")
+
+while True:
+    try:
+        sheet_index = int(input("Enter the index of the sheet you want to use. 1 is the first sheet, 2 is the second sheet, etc.: ")) - 1
+        if sheet_index < 0 or sheet_index >= len(sheet_names):
+            raise ValueError("Invalied sheet index. Please Try Again")
+        
+        break
+    except ValueError:
+        print("Invalid input. Please enter a valid integer.")
+
+selected_sheet = sheet_names[sheet_index]
+df = pd.read_excel(excel_file, sheet_name=selected_sheet)
 
 for col in df: # Replace any x in the Excel file with the column's name
     df[col]=df[col].astype(str).apply(lambda x: x.replace('x',df[col].name))
@@ -136,9 +161,6 @@ for dic in employee_list: # Iterates through the master list of dictionaries and
 
 total_FUE = (len(advanced_user_list) * 1) + (len(core_user_list) * 0.2) + (len(self_service_constant_list) * 0.0333) # Calculate Total FUE based on doc rules
 print("The total FUE used by the organization is: " + str(total_FUE))
-# print(only_one_advanced_user_list)
-# print(only_one_core_user_list)
-# print(only_one_self_service_user_list)
 print(employee_list_with_counts)
 
 
