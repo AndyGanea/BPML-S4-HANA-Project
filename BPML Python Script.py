@@ -2,6 +2,7 @@ import math
 import os
 import sys
 import glob
+from datetime import datetime
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = root_dir.replace("\\", "/")
@@ -196,7 +197,7 @@ for dic in employee_list: # Iterates through the master list of dictionaries and
         employee_count_dict = {}
 
         # Create a dictionary with an employee and how many roles they have of each type
-        
+
         employee_count_dict["Name"] = key
         employee_count_dict["Advanced User Roles"] = advanced_user_count
         employee_count_dict["Core User Roles"] = core_user_count
@@ -208,12 +209,23 @@ for dic in employee_list: # Iterates through the master list of dictionaries and
 
 total_FUE = (len(advanced_user_list) * 1) + (len(core_user_list) * 0.2) + (len(self_service_constant_list) * 0.0333) # Calculate Total FUE based on doc rules
 print("The total FUE used by the organization is: " + str(total_FUE))
-print(employee_list_with_counts)
 
 
 ## Exporting Data to Another Excel Sheet
 
-excel_file = r"C:\Users\aganea\Documents\output.xlsx"
+output_spreadsheet_directory = get_spreadsheets_name()
+current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+output_file_name = f"user_output_{current_time}.xlsx"
+
+df = pd.DataFrame()
+
+excel_writer = pd.ExcelWriter(os.path.join(output_spreadsheet_directory, output_file_name), engine="xlsxwriter")
+df.to_excel(excel_writer, index=False, sheet_name='User Output')
+excel_writer.close()
+
+
+excel_file = os.path.join(output_spreadsheet_directory, output_file_name)
+
 
 # Wipe current contents to prepare for overwrite
 workbook = openpyxl.load_workbook(excel_file)
