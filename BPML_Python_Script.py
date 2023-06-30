@@ -4,6 +4,7 @@ import sys
 import glob
 from datetime import datetime
 
+#### Importing Local Libraries
 root_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = root_dir.replace("\\", "/")
 libraries_dir = root_dir + "/libs"
@@ -27,19 +28,25 @@ def get_library_name(): # Used to easily obtain the path of the libraries
     libraries_directory = root_dir + "/libs"
     return libraries_directory
 
-def get_spreadsheets_name(): # Used to easily obtain the path of the spreadsheets
+def get_input_spreadsheets_name(): # Used to easily obtain the path of the spreadsheets
     root_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = root_dir.replace("\\", "/")
-    spreadsheet_directory = root_dir + "/spreadsheets"
+    spreadsheet_directory = root_dir + "/spreadsheets/input"
     return spreadsheet_directory
 
-# Contains the logic to pick an Excel file and a valid sheet.
+def get_output_spreadsheets_name(): # Used to easily obtain the path of the spreadsheets
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = root_dir.replace("\\", "/")
+    spreadsheet_directory = root_dir + "/spreadsheets/output"
+    return spreadsheet_directory
 
-input_spreadsheet_directory = get_spreadsheets_name()
+##### Contains the logic to pick an Excel file and a valid sheet.
+
+input_spreadsheet_directory = get_input_spreadsheets_name()
 
 excel_files = glob.glob(os.path.join(input_spreadsheet_directory, '*.xlsx')) # Looks at all the .xlsx files in the directory
 
-if len(excel_files) == 0:
+if len(excel_files) == 0: # Closes the program is the user forgot to put in an input file.
     print("No Excel files found, please re-run program with your input Excel file in the correct folder.")
     exit()
 
@@ -47,7 +54,7 @@ print("Found Excel file(s):")
 for i, file in enumerate(excel_files):
     print(f"{i+1}. {file}") # Prints out all found files.
 
-while True:
+while True: # Error handling for choosing a correct Excel file
     choice = input("Enter the number of the Excel file you want to choose (or 'q' to quit): ")
     if choice.lower() == 'q': # Allows the user to quit program
         break
@@ -62,6 +69,9 @@ while True:
     except ValueError:
         print("Invalid choice. Please enter a valid number.")
 
+######
+
+
 #### Code that allows a user to select a specific sheet where the BPML sheet is stored.
 excel_file_name = pd.ExcelFile(excel_file)
 sheet_names = excel_file_name.sheet_names
@@ -72,9 +82,9 @@ for index, name in enumerate(sheet_names):
 
 while True:
     try:
-        sheet_index = int(input("Enter the index of the sheet you want to use. 1 is the first sheet, 2 is the second sheet, etc.: ")) - 1
+        sheet_index = int(input("Enter the index of the sheet you want to use that contains your users and the roles that they have. 1 is the first sheet, 2 is the second sheet, etc.: ")) - 1
         if sheet_index < 0 or sheet_index >= len(sheet_names):
-            raise ValueError("Invalied sheet index. Please Try Again")
+            raise ValueError("Invalid sheet index. Please Try Again")
         
         break
     except ValueError:
@@ -83,6 +93,7 @@ while True:
 ########
 
 
+### Turn the selected sheet into a dictionary of dictionaries (each internal dictionary is a row)
 selected_sheet = sheet_names[sheet_index]
 df = pd.read_excel(excel_file, sheet_name=selected_sheet)
 
@@ -103,6 +114,7 @@ for index, row in df.iterrows():
     # Add the row dictionary to the data dictionary
    
     data_dict[key] = row_dict
+#####
 
 
 # Extract each internal dictionary with associated key
@@ -125,7 +137,7 @@ for key, internal_dict in extracted_dicts:
     employee_dict = {key: list_before_dictionary_entry} # Create a separate dictionary for each employee and their roles
     employee_list.append(employee_dict) # Add each employee to a master list of dicionaries
 
-# Initializing all lists used to store data
+####### Initializing all lists used to store data
 advanced_user_list = []
 core_user_list = []
 self_service_list = []
@@ -140,9 +152,34 @@ only_one_self_service_user_list = []
 
 employee_list_with_counts = []
 
+total_FUE_export_list = []
 
-sheet_name = "Role Mapping"
-df2 = pd.read_excel(excel_file, sheet_name=sheet_name)
+#######
+
+
+#### Code that allows the user to select where the Role Mapping sheet is.
+excel_file_name = pd.ExcelFile(excel_file)
+sheet_names = excel_file_name.sheet_names
+
+print("Available sheet(s):")
+for index, name in enumerate(sheet_names):
+    print(f"{index + 1}. {name}")
+
+while True:
+    try:
+        sheet_index = int(input("Enter the index of the sheet you want to use that contains data that maps roles to their category. 1 is the first sheet, 2 is the second sheet, etc.: ")) - 1
+        if sheet_index < 0 or sheet_index >= len(sheet_names):
+            raise ValueError("Invalid sheet index. Please Try Again")
+        
+        break
+    except ValueError:
+        print("Invalid input. Please enter a valid integer.")
+
+selected_sheet = sheet_names[sheet_index]
+
+df2 = pd.read_excel(excel_file, sheet_name=selected_sheet)
+
+########
 
 data_dict_roles = {}
 
@@ -206,14 +243,14 @@ for dic in employee_list: # Iterates through the master list of dictionaries and
         employee_list_with_counts.append(employee_count_dict)
 
 
-
+### Calculate total FUE
 total_FUE = (len(advanced_user_list) * 1) + (len(core_user_list) * 0.2) + (len(self_service_constant_list) * 0.0333) # Calculate Total FUE based on doc rules
-print("The total FUE used by the organization is: " + str(total_FUE))
+total_FUE_export_list.append(total_FUE)
 
 
 ## Exporting Data to Another Excel Sheet
 
-output_spreadsheet_directory = get_spreadsheets_name()
+output_spreadsheet_directory = get_output_spreadsheets_name()
 current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 output_file_name = f"user_output_{current_time}.xlsx"
 
@@ -226,12 +263,8 @@ excel_writer.close()
 
 excel_file = os.path.join(output_spreadsheet_directory, output_file_name)
 
+##
 
-# Wipe current contents to prepare for overwrite
-workbook = openpyxl.load_workbook(excel_file)
-sheet = workbook.active
-sheet.delete_rows(1, sheet.max_row)
-workbook.save(excel_file)
 
 # Write Counts for Each Employee
 df = pd.DataFrame(employee_list_with_counts)
@@ -239,8 +272,8 @@ start_row = 0
 start_col = 0
 
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
-df.to_excel(writer, sheet_name='Sheet1', index=False, startrow=start_row, startcol=start_col)
-worksheet = writer.sheets['Sheet1']
+df.to_excel(writer, sheet_name='User Output', index=False, startrow=start_row, startcol=start_col)
+worksheet = writer.sheets['User Output']
 for idx, col in enumerate(df):  # loop through all columns to auto-adjust widths
         series = df[col]
         max_len = max((
@@ -258,8 +291,8 @@ start_col = existing_data.shape[1]
 df1 = pd.DataFrame({"Advanced Users": advanced_user_list})
 df1 = pd.concat([existing_data, df1], axis=1)
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
-df1.to_excel(writer, sheet_name='Sheet1', index=False)
-worksheet = writer.sheets['Sheet1']
+df1.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
 for idx, col in enumerate(df1):  # loop through all columns to auto-adjust widths
         series = df1[col]
         max_len = max((
@@ -274,8 +307,8 @@ start_col = existing_data.shape[1]
 df2 = pd.DataFrame({"Core Users": core_user_list})
 df2 = pd.concat([existing_data, df2], axis=1)
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
-df2.to_excel(writer, sheet_name='Sheet1', index=False)
-worksheet = writer.sheets['Sheet1']
+df2.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
 for idx, col in enumerate(df2):  # loop through all columns to auto-adjust widths
         series = df2[col]
         max_len = max((
@@ -290,8 +323,8 @@ start_col = existing_data.shape[1]
 df3 = pd.DataFrame({"Self-Service Users": self_service_list})
 df3 = pd.concat([existing_data, df3], axis=1)
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
-df3.to_excel(writer, sheet_name='Sheet1', index=False)
-worksheet = writer.sheets['Sheet1']
+df3.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
 for idx, col in enumerate(df3):  # loop through all columns to auto-adjust widths
         series = df3[col]
         max_len = max((
@@ -306,8 +339,8 @@ start_col = existing_data.shape[1]
 df4 = pd.DataFrame({"Advanced Users with Only One Role": only_one_advanced_user_list})
 df4 = pd.concat([existing_data, df4], axis=1)
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
-df4.to_excel(writer, sheet_name='Sheet1', index=False)
-worksheet = writer.sheets['Sheet1']
+df4.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
 for idx, col in enumerate(df4):  # loop through all columns to auto-adjust widths
         series = df4[col]
         max_len = max((
@@ -323,8 +356,8 @@ start_col = existing_data.shape[1]
 df5 = pd.DataFrame({"Core Users with Only One Role": only_one_core_user_list})
 df5 = pd.concat([existing_data, df5], axis=1)
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
-df5.to_excel(writer, sheet_name='Sheet1', index=False)
-worksheet = writer.sheets['Sheet1']
+df5.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
 for idx, col in enumerate(df5):  # loop through all columns to auto-adjust widths
         series = df5[col]
         max_len = max((
@@ -339,8 +372,8 @@ start_col = existing_data.shape[1]
 df6 = pd.DataFrame({"Self-Service Users with Only One Role": only_one_self_service_user_list})
 df6 = pd.concat([existing_data, df6], axis=1)
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
-df6.to_excel(writer, sheet_name='Sheet1', index=False)
-worksheet = writer.sheets['Sheet1']
+df6.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
 for idx, col in enumerate(df6):  # loop through all columns to auto-adjust widths
         series = df6[col]
         max_len = max((
@@ -349,6 +382,23 @@ for idx, col in enumerate(df6):  # loop through all columns to auto-adjust width
             )) + 1  # adding a little extra space
         worksheet.set_column(idx, idx, max_len)  # set column width
 writer.close()
+
+existing_data = pd.read_excel(excel_file)
+start_col = existing_data.shape[1]
+df7 = pd.DataFrame({"Total FUE(s) Used by the Organization": total_FUE_export_list})
+df7 = pd.concat([existing_data, df7], axis=1)
+writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
+df7.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
+for idx, col in enumerate(df7):  # loop through all columns to auto-adjust widths
+        series = df7[col]
+        max_len = max((
+            series.astype(str).map(len).max(),  # len of largest item
+            len(str(series.name))  # len of column name/header
+            )) + 1  # adding a little extra space
+        worksheet.set_column(idx, idx, max_len)  # set column width
+writer.close()
+
 
 
 print(f"Data exported to '{excel_file}' successfully.")
