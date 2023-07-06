@@ -1,8 +1,10 @@
 import math
 import os
+import io
 import sys
 import glob
 from datetime import datetime
+import tempfile
 
 #### Importing Local Libraries
 root_dir = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +14,7 @@ sys.path.append(libraries_dir) # Used to import local pip libraries
 import pandas as pd
 import openpyxl
 import xlsxwriter
+
 
 
 def find_common_element(list1, list2):  # Function that checks if an employee has only 1 role in a certain category
@@ -57,7 +60,7 @@ for i, file in enumerate(excel_files):
 while True: # Error handling for choosing a correct Excel file
     choice = input("Enter the number of the Excel file you want to choose (or 'q' to quit): ")
     if choice.lower() == 'q': # Allows the user to quit program
-        break
+        exit()
     try:
         choice = int(choice)
         if 1 <= choice <= len(excel_files):
