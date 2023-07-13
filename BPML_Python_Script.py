@@ -3,8 +3,10 @@ import os
 import io
 import sys
 import glob
+import time
 from datetime import datetime
 import tempfile
+import shutil
 
 #### Importing Local Libraries
 root_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +16,20 @@ sys.path.append(libraries_dir) # Used to import local pip libraries
 import pandas as pd
 import openpyxl
 import xlsxwriter
+import sharepy
+import psutil
+
+site_url = "https://sterimax.sharepoint.com"
+
+s = sharepy.connect(site_url)
+
+file_url = "https://sterimax.sharepoint.com/:x:/r/sites/SMIProjectElevate/Shared%20Documents/1.3%20Realize%20Build/BPML/Project_Elevate_BPML.xlsx"
+download_path = "./spreadsheets/input/Project_Elevate_BPML.xlsx"
+
+r = s.getfile(file_url, filename=download_path)
+ 
+df = pd.read_excel(download_path)
+print(df)
 
 
 
@@ -42,6 +58,19 @@ def get_output_spreadsheets_name(): # Used to easily obtain the path of the spre
     root_dir = root_dir.replace("\\", "/")
     spreadsheet_directory = root_dir + "/spreadsheets/output"
     return spreadsheet_directory
+
+def delete_file(file_path):
+    for proc in psutil.process_iter():
+        try:
+            for item in proc.open_files():
+                if file_path == item.path:
+                    proc.kill()
+        except Exception:
+            pass
+
+    if os.path.isfile(file_path):
+        os.remove(file_path)
+
 
 ##### Contains the logic to pick an Excel file and a valid sheet.
 
@@ -157,6 +186,8 @@ employee_list_with_counts = []
 
 total_FUE_export_list = []
 
+PO_CREATOR = ["ZS_MM_PO_CREATOR"]
+po_creator_users_list = []
 #######
 
 
@@ -227,6 +258,13 @@ for dic in employee_list: # Iterates through the master list of dictionaries and
             only_one_core_user_list.append(key)
         if self_service_user_result:
             only_one_self_service_user_list.append(key)
+
+for dic in employee_list:
+    for key, employee_value in dic.items():
+        po_creator_user_result = find_common_element(PO_CREATOR, employee_value)
+        if po_creator_user_result:
+            po_creator_users_list.append(key)
+
 
 for dic in employee_list: # Iterates through the master list of dictionaries and sees how many roles of each type someone has
     for key, employee_value in dic.items():
@@ -388,7 +426,7 @@ writer.close()
 
 existing_data = pd.read_excel(excel_file)
 start_col = existing_data.shape[1]
-df7 = pd.DataFrame({"Total FUE(s) Used by the Organization": total_FUE_export_list})
+df7 = pd.DataFrame({"People that have ZS_MM_PO_CREATOR": po_creator_users_list})
 df7 = pd.concat([existing_data, df7], axis=1)
 writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
 df7.to_excel(writer, sheet_name='User Output', index=False)
@@ -403,6 +441,21 @@ for idx, col in enumerate(df7):  # loop through all columns to auto-adjust width
 writer.close()
 
 
+existing_data = pd.read_excel(excel_file)
+start_col = existing_data.shape[1]
+df8 = pd.DataFrame({"Total FUE(s) Used by the Organization": total_FUE_export_list})
+df8 = pd.concat([existing_data, df8], axis=1)
+writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
+df8.to_excel(writer, sheet_name='User Output', index=False)
+worksheet = writer.sheets['User Output']
+for idx, col in enumerate(df8):  # loop through all columns to auto-adjust widths
+        series = df8[col]
+        max_len = max((
+            series.astype(str).map(len).max(),  # len of largest item
+            len(str(series.name))  # len of column name/header
+            )) + 1  # adding a little extra space
+        worksheet.set_column(idx, idx, max_len)  # set column width
+writer.close()
 
 print(f"Data exported to '{excel_file}' successfully.")
 
