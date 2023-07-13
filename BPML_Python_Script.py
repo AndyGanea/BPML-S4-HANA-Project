@@ -17,7 +17,6 @@ import pandas as pd
 import openpyxl
 import xlsxwriter
 import sharepy
-import psutil
 
 site_url = "https://sterimax.sharepoint.com"
 
@@ -58,18 +57,6 @@ def get_output_spreadsheets_name(): # Used to easily obtain the path of the spre
     root_dir = root_dir.replace("\\", "/")
     spreadsheet_directory = root_dir + "/spreadsheets/output"
     return spreadsheet_directory
-
-def delete_file(file_path):
-    for proc in psutil.process_iter():
-        try:
-            for item in proc.open_files():
-                if file_path == item.path:
-                    proc.kill()
-        except Exception:
-            pass
-
-    if os.path.isfile(file_path):
-        os.remove(file_path)
 
 
 ##### Contains the logic to pick an Excel file and a valid sheet.
