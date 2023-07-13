@@ -28,8 +28,6 @@ download_path = "./spreadsheets/input/Project_Elevate_BPML.xlsx"
 r = s.getfile(file_url, filename=download_path)
  
 df = pd.read_excel(download_path)
-print(df)
-
 
 
 def find_common_element(list1, list2):  # Function that checks if an employee has only 1 role in a certain category
@@ -443,6 +441,39 @@ for idx, col in enumerate(df8):  # loop through all columns to auto-adjust width
             )) + 1  # adding a little extra space
         worksheet.set_column(idx, idx, max_len)  # set column width
 writer.close()
+
+
+### Generate Report of All Users and Their Roles
+
+employee_list_for_first_report = [(k, v) for d in employee_list for k, v1 in d.items() for v in v1]
+
+df9 = pd.DataFrame(employee_list_for_first_report, columns=['Staff Member', 'Assigned Roles'])
+
+df9['Staff Member'] = df9['Staff Member'].mask(df9["Staff Member"].duplicated(), '')
+
+writer = pd.ExcelWriter(excel_file, engine='openpyxl', mode='a')
+
+df9.to_excel(writer, sheet_name='Report 1', startrow=1, index=False)
+
+# Get the workbook object
+workbook  = writer.book
+
+# Get the worksheet by name
+worksheet = workbook['Report 1']
+
+# Write the current date in the first cell
+worksheet['A1'] = "Date: " + datetime.now().strftime('%Y-%m-%d')
+dims = {}
+for row in worksheet.rows:
+    for cell in row:
+        if cell.value:
+            dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))    
+for col, value in dims.items():
+    worksheet.column_dimensions[col].width = value
+
+writer.close()
+
+
 
 print(f"Data exported to '{excel_file}' successfully.")
 
