@@ -18,12 +18,18 @@ import openpyxl
 import xlsxwriter
 import sharepy
 
+def get_input_spreadsheets_name(): # Used to easily obtain the path of the spreadsheets
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = root_dir.replace("\\", "/")
+    spreadsheet_directory = root_dir + "/spreadsheets/input"
+    return spreadsheet_directory
+
 site_url = "https://sterimax.sharepoint.com"
 
 s = sharepy.connect(site_url)
 
 file_url = "https://sterimax.sharepoint.com/:x:/r/sites/SMIProjectElevate/Shared%20Documents/1.3%20Realize%20Build/BPML/Project_Elevate_BPML.xlsx"
-download_path = "./spreadsheets/input/Project_Elevate_BPML.xlsx"
+download_path = get_input_spreadsheets_name() + r"/Project_Elevate_BPML.xlsx"
 
 r = s.getfile(file_url, filename=download_path)
  
@@ -44,11 +50,7 @@ def get_library_name(): # Used to easily obtain the path of the libraries
     libraries_directory = root_dir + "/libs"
     return libraries_directory
 
-def get_input_spreadsheets_name(): # Used to easily obtain the path of the spreadsheets
-    root_dir = os.path.dirname(os.path.abspath(__file__))
-    root_dir = root_dir.replace("\\", "/")
-    spreadsheet_directory = root_dir + "/spreadsheets/input"
-    return spreadsheet_directory
+
 
 def get_output_spreadsheets_name(): # Used to easily obtain the path of the spreadsheets
     root_dir = os.path.dirname(os.path.abspath(__file__))
