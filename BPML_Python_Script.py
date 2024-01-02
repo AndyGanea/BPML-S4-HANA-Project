@@ -24,12 +24,12 @@ def get_input_spreadsheets_name(): # Used to easily obtain the path of the sprea
     spreadsheet_directory = root_dir + "/spreadsheets/input"
     return spreadsheet_directory
 
-site_url = "https://sterimax.sharepoint.com"
+site_url = # Enter your Microsoft site url here
 
 s = sharepy.connect(site_url)
 
-file_url = "https://sterimax.sharepoint.com/:x:/r/sites/SMIProjectElevate/Shared%20Documents/1.3%20Realize%20Build/BPML/Project_Elevate_BPML.xlsx"
-download_path = get_input_spreadsheets_name() + r"/Project_Elevate_BPML.xlsx"
+file_url = # Enter the full fire URL of your spreadsheet here
+download_path = get_input_spreadsheets_name() + # Enter the name of the spreadsheet file here
 
 r = s.getfile(file_url, filename=download_path)
  
