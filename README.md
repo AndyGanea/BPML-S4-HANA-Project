@@ -14,8 +14,8 @@
 ## How to Generate a Simple Excel Report
 
 1. Now that Python is installed, right-click BPML_Python_Script.py and click Open with -> Python
-2. When prompted to enter your username, type in your Sterimax email and press Enter
-3. When prompted to enter your password, type in the password associated with your Sterimax email
+2. When prompted to enter your username, type in your email and press Enter
+3. When prompted to enter your password, type in the password and Press enter
     + If you have 2FA/MFA enabled, you need to paste in an app password.
     + To generate an app password, go [here](https://account.activedirectory.windowsazure.com/Proofup.aspx), log in, click on **Add Sign-in method** and choose **App Password**.
     + Once generated, keep your app password in a secure place since it will only ever be displayed once.
